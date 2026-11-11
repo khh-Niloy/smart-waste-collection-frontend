@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { FilePlus2, Search } from 'lucide-react';
 import { ProtectedRoute } from '@/components/auth/protected-route';
 import { AppShell } from '@/components/layout/app-shell';
@@ -25,8 +26,10 @@ import {
   WasteReport,
 } from '@/types/domain';
 
-export default function MyComplaintsPage() {
-  const [search, setSearch] = useState('');
+function MyComplaintsContent() {
+  const searchParams = useSearchParams();
+  const initialSearch = searchParams.get('search') || '';
+  const [search, setSearch] = useState(initialSearch);
   const [category, setCategory] = useState<WasteCategory | ''>('');
   const [status, setStatus] = useState<ReportStatus | ''>('');
   const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
@@ -269,6 +272,16 @@ export default function MyComplaintsPage() {
         </div>
       </AppShell>
     </ProtectedRoute>
+  );
+}
+
+export default function MyComplaintsPage() {
+  return (
+    <Suspense
+      fallback={<LoadingSpinner fullScreen label="Loading complaints..." />}
+    >
+      <MyComplaintsContent />
+    </Suspense>
   );
 }
 

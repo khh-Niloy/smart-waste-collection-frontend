@@ -1,13 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import {
-  CircleMarker,
-  MapContainer,
-  TileLayer,
-  useMapEvents,
-} from 'react-leaflet';
 
 interface LocationPickerProps {
   latitude: number | null;
@@ -15,63 +10,86 @@ interface LocationPickerProps {
   onChange: (lat: number, lng: number) => void;
 }
 
-function ClickHandler({
-  onSelect,
-}: {
-  onSelect: (lat: number, lng: number) => void;
-}) {
-  useMapEvents({
-    click(e) {
-      onSelect(
-        Number(e.latlng.lat.toFixed(6)),
-        Number(e.latlng.lng.toFixed(6)),
-      );
-    },
-  });
-  return null;
-}
-
 export default function LocationPicker({
   latitude,
   longitude,
   onChange,
 }: LocationPickerProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const mapRef = useRef<L.Map | null>(null);
+  const markerRef = useRef<L.CircleMarker | null>(null);
+  const onChangeRef = useRef(onChange);
   const [tileError, setTileError] = useState(false);
-  const center: [number, number] =
-    latitude !== null && longitude !== null
-      ? [latitude, longitude]
-      : [23.7806, 90.4071];
+
+  useEffect(() => {
+    onChangeRef.current = onChange;
+  }, [onChange]);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+
+    const initialCenter: [number, number] =
+      latitude !== null && longitude !== null
+        ? [latitude, longitude]
+        : [23.7806, 90.4071];
+
+    const map = L.map(el, {
+      center: initialCenter,
+      zoom: 13,
+      scrollWheelZoom: false,
+    });
+    mapRef.current = map;
+
+    const tileLayer = L.tileLayer(
+      'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+      {
+        attribution: '&copy; OpenStreetMap contributors',
+      },
+    );
+    tileLayer.on('tileerror', () => setTileError(true));
+    tileLayer.addTo(map);
+
+    map.on('click', (e: L.LeafletMouseEvent) => {
+      onChangeRef.current(
+        Number(e.latlng.lat.toFixed(6)),
+        Number(e.latlng.lng.toFixed(6)),
+      );
+    });
+
+    return () => {
+      markerRef.current = null;
+      map.remove();
+      mapRef.current = null;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    if (markerRef.current) {
+      markerRef.current.remove();
+      markerRef.current = null;
+    }
+
+    if (latitude !== null && longitude !== null) {
+      markerRef.current = L.circleMarker([latitude, longitude], {
+        radius: 9,
+        color: '#133826',
+        fillColor: '#1b5e3c',
+        fillOpacity: 0.85,
+        weight: 2,
+      }).addTo(map);
+      map.panTo([latitude, longitude]);
+    }
+  }, [latitude, longitude]);
 
   return (
     <div className="space-y-2">
       <div className="relative h-64 w-full overflow-hidden rounded-sm border border-[#d1cec4] bg-[#eceae3]">
-        <MapContainer
-          center={center}
-          zoom={13}
-          scrollWheelZoom={false}
-          className="h-full w-full"
-        >
-          <TileLayer
-            attribution="&copy; OpenStreetMap contributors"
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            eventHandlers={{
-              tileerror: () => setTileError(true),
-            }}
-          />
-          <ClickHandler onSelect={onChange} />
-          {latitude !== null && longitude !== null && (
-            <CircleMarker
-              center={[latitude, longitude]}
-              radius={9}
-              pathOptions={{
-                color: '#133826',
-                fillColor: '#1b5e3c',
-                fillOpacity: 0.85,
-                weight: 2,
-              }}
-            />
-          )}
-        </MapContainer>
+        <div ref={containerRef} className="h-full w-full" />
       </div>
       {tileError && (
         <p className="text-xs text-[#9a3412]">
@@ -82,4 +100,3 @@ export default function LocationPicker({
     </div>
   );
 }
-

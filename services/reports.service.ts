@@ -52,8 +52,12 @@ export const reportsService = {
     return data;
   },
 
-  async getMySummary(): Promise<CitizenSummary> {
-    const { data } = await api.get<CitizenSummary>('/reports/my-summary');
+  async getMySummary(
+    timeframe: 'month' | 'all' = 'all',
+  ): Promise<CitizenSummary> {
+    const { data } = await api.get<CitizenSummary>('/reports/my-summary', {
+      params: { timeframe },
+    });
     return data;
   },
 

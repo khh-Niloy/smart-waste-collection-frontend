@@ -133,6 +133,7 @@ export interface CitizenSummary {
   resolved: number;
   rejected: number;
   recentReports: WasteReport[];
+  mapReports?: MapReportMarker[];
 }
 
 export interface StatisticsOverview {
