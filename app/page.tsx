@@ -13,6 +13,7 @@ import {
   MapPin,
   Phone,
   PlusCircle,
+  ShieldCheck,
   Truck,
   UserPlus,
   Users,
@@ -163,6 +164,13 @@ export default function HomePage() {
                 className="inline-flex h-11 items-center rounded-lg border border-[#d6e0da] bg-white px-6 text-sm font-semibold text-[#111e16] transition-colors hover:bg-[#f7faf8]"
               >
                 Sign In
+              </Link>
+              <Link
+                href="/login?role=admin"
+                className="inline-flex h-11 items-center gap-2 rounded-lg border border-[#133826]/25 bg-[#133826]/5 px-5 text-sm font-semibold text-[#133826] transition-colors hover:bg-[#133826] hover:text-white"
+              >
+                <ShieldCheck className="h-4 w-4" />
+                <span>Admin Login</span>
               </Link>
             </div>
 

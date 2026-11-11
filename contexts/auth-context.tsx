@@ -9,13 +9,14 @@ import React, {
   useState,
 } from 'react';
 import { authService } from '@/services/auth.service';
-import { LoginPayload, RegisterPayload, User } from '@/types/auth';
+import { LoginPayload, RegisterPayload, Role, User } from '@/types/auth';
 
 interface AuthContextValue {
   user: User | null;
   isLoading: boolean;
   isAuthenticated: boolean;
   login: (payload: LoginPayload) => Promise<User>;
+  demoLogin: (role: Role) => Promise<User>;
   register: (payload: RegisterPayload) => Promise<User>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<User | null>;
@@ -68,6 +69,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return loggedInUser;
   }, []);
 
+  const demoLogin = useCallback(async (role: Role): Promise<User> => {
+    const loggedInUser = await authService.demoLogin(role);
+    setUser(loggedInUser);
+    return loggedInUser;
+  }, []);
+
   const register = useCallback(
     async (payload: RegisterPayload): Promise<User> => {
       const registeredUser = await authService.register(payload);
@@ -91,11 +98,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       isLoading,
       isAuthenticated: Boolean(user),
       login,
+      demoLogin,
       register,
       logout,
       refreshUser,
     }),
-    [user, isLoading, login, register, logout, refreshUser],
+    [user, isLoading, login, demoLogin, register, logout, refreshUser],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

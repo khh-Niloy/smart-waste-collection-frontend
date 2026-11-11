@@ -3,21 +3,24 @@
 import { FormEvent, Suspense, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { ArrowLeft, Leaf } from 'lucide-react';
+import { ArrowLeft, Leaf, ShieldCheck, User as UserIcon } from 'lucide-react';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { StatusAlert } from '@/components/ui/status-alert';
 import { useAuth } from '@/contexts/auth-context';
 import { getApiErrorMessage } from '@/lib/api';
+import { Role } from '@/types/auth';
 
 function LoginFormContent() {
-  const { user, isLoading, login } = useAuth();
+  const { user, isLoading, login, demoLogin } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirectParam = searchParams.get('redirect');
+  const roleParam = searchParams.get('role');
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [demoLoading, setDemoLoading] = useState<Role | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -52,6 +55,26 @@ function LoginFormContent() {
     }
   };
 
+  const handleDemoSignIn = async (role: Role) => {
+    setError(null);
+    setDemoLoading(role);
+    try {
+      const authenticatedUser = await demoLogin(role);
+      const fallback =
+        authenticatedUser.role === 'ADMIN' ? '/admin' : '/citizen';
+      router.replace(redirectParam || fallback);
+    } catch (err) {
+      setError(
+        getApiErrorMessage(
+          err,
+          `Unable to sign in as ${role === 'ADMIN' ? 'Admin' : 'Citizen'}.`,
+        ),
+      );
+    } finally {
+      setDemoLoading(null);
+    }
+  };
+
   if (isLoading) {
     return <LoadingSpinner fullScreen label="Checking session..." />;
   }
@@ -78,7 +101,7 @@ function LoginFormContent() {
 
         <div className="my-10 lg:my-0">
           <p className="font-mono text-[11px] uppercase tracking-[0.1em] text-[#9fd4b5]">
-            Portal Access
+            {roleParam === 'admin' ? 'Administrator Portal' : 'Portal Access'}
           </p>
           <h1 className="mt-3 text-2xl font-semibold leading-snug tracking-[-0.02em] sm:text-3xl">
             Municipal Waste &amp; Sanitation Desk
@@ -101,7 +124,9 @@ function LoginFormContent() {
             Sign in to your account
           </h2>
           <p className="mt-1 text-sm text-[#5a5f59]">
-            Enter your registered email and password below.
+            {roleParam === 'admin'
+              ? 'Use municipal administrator credentials or quick sign-in below.'
+              : 'Enter your registered email and password below.'}
           </p>
 
           {error && (
@@ -153,12 +178,50 @@ function LoginFormContent() {
 
             <button
               type="submit"
-              disabled={submitting}
+              disabled={submitting || demoLoading !== null}
               className="mt-2 h-10 w-full rounded-sm bg-[#1b5e3c] px-4 text-sm font-medium text-white transition-colors hover:bg-[#14482e] disabled:cursor-not-allowed disabled:opacity-60"
             >
               {submitting ? 'Signing in...' : 'Sign In'}
             </button>
           </form>
+
+          {/* One-Click Demo Sign-In */}
+          <div className="mt-6 border-t border-[#eceae3] pt-5">
+            <p className="mb-3 font-mono text-[11px] uppercase tracking-[0.06em] text-[#5a5f59]">
+              Quick Sign-In
+            </p>
+            <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+              <button
+                type="button"
+                onClick={() => handleDemoSignIn('CITIZEN')}
+                disabled={submitting || demoLoading !== null}
+                className="flex h-10 items-center justify-center gap-2 rounded-sm border border-[#cde0d3] bg-[#f1f8f3] px-3 text-xs font-semibold text-[#133826] transition-colors hover:bg-[#e3f2e8] disabled:opacity-60"
+              >
+                <UserIcon className="h-3.5 w-3.5 text-[#1b5e3c]" />
+                <span>
+                  {demoLoading === 'CITIZEN'
+                    ? 'Signing in...'
+                    : 'Citizen Sign In'}
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleDemoSignIn('ADMIN')}
+                disabled={submitting || demoLoading !== null}
+                className={`flex h-10 items-center justify-center gap-2 rounded-sm border px-3 text-xs font-semibold transition-colors disabled:opacity-60 ${
+                  roleParam === 'admin'
+                    ? 'border-[#133826] bg-[#133826] text-white hover:bg-[#0e2a1c]'
+                    : 'border-[#133826]/30 bg-[#133826]/5 text-[#133826] hover:bg-[#133826] hover:text-white'
+                }`}
+              >
+                <ShieldCheck className="h-3.5 w-3.5" />
+                <span>
+                  {demoLoading === 'ADMIN' ? 'Signing in...' : 'Admin Sign In'}
+                </span>
+              </button>
+            </div>
+          </div>
 
           <div className="mt-6 border-t border-[#eceae3] pt-5 text-sm text-[#5a5f59]">
             New citizen?{' '}
