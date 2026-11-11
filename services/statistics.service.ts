@@ -15,3 +15,4 @@ export const statisticsService = {
     return data;
   },
 };
+

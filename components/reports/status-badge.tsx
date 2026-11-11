@@ -24,3 +24,4 @@ export function PriorityBadge({ priority }: { priority: ReportPriority }) {
     </span>
   );
 }
+

@@ -182,3 +182,4 @@ export interface MapReportMarker {
   longitude: number;
   createdAt: string;
 }
+

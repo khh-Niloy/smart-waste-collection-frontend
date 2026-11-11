@@ -24,3 +24,4 @@ export const uploadsService = {
     return data;
   },
 };
+

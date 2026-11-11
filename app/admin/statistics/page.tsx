@@ -345,3 +345,4 @@ export default function AdminStatisticsPage() {
     </ProtectedRoute>
   );
 }
+
