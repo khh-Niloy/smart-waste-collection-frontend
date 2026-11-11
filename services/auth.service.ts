@@ -22,9 +22,28 @@ export const authService = {
     return data;
   },
 
+  async updateProfile(payload: {
+    fullName: string;
+    phone?: string;
+  }): Promise<User> {
+    const { data } = await api.patch<User>('/users/profile', payload);
+    return data;
+  },
+
+  async changePassword(payload: {
+    currentPassword: string;
+    newPassword: string;
+    confirmPassword: string;
+  }): Promise<{ message: string }> {
+    const { data } = await api.patch<{ message: string }>(
+      '/users/password',
+      payload,
+    );
+    return data;
+  },
+
   async listUsers(): Promise<User[]> {
     const { data } = await api.get<User[]>('/users');
     return data;
   },
 };
-
